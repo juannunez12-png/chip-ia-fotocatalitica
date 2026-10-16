@@ -1,20 +1,54 @@
-<!---
 
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
+# How it works
 
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
+This project implements a multi-sensor neural network in Verilog for a conceptual water purification system.
 
-## How it works
+The chip receives 8 bits of input data representing three sensors:
 
-Explain how your project works
+- ui_in[3:0]: Heavy metal contamination (0-15).
+- ui_in[5:4]: Ultraviolet radiation (0-3).
+- ui_in[7:6]: Encoded pH level (0-3).
 
-## How to test
+The circuit calculates a risk score using fixed weights and a bias:
 
-Explain how to use your project
+Risk = 8 * Metal - 12 * UV + 4 * pH + 20
 
-## External hardware
+If the risk exceeds 40, or UV radiation is zero, the output valve closes.
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+Output signals:
+
+- uo_out[0]: Valve control (1 = open, 0 = closed).
+- uo_out[1]: UV alarm (1 = no UV detected).
+- uo_out[7:2]: Unused, tied to zero.
+
+The valve state updates on the rising edge of the clock. The active-low reset closes the valve.
+
+# How to test
+
+Apply the following 8-bit values to ui_in. Keep rst_n high after an initial reset and provide clock pulses.
+
+Test A: Low contamination and high UV radiation.
+
+- ui_in = 0x71
+- Expected valve = 1
+- Expected UV alarm = 0
+
+Test B: High contamination without UV radiation.
+
+- ui_in = 0x8A
+- Expected valve = 0
+- Expected UV alarm = 1
+
+Test C: No contamination and no UV radiation.
+
+- ui_in = 0x00
+- Expected valve = 0
+- Expected UV alarm = 1
+
+The circuit was tested using Icarus Verilog and Docker. All three scenarios passed functional simulation.
+
+# External hardware
+
+No external hardware is required for digital simulation.
+
+For a physical prototype, compatible digital sensor interfaces and a valve driver would be necessary. The ASIC outputs logic-level control signals and does not directly drive a water valve.
